@@ -107,10 +107,11 @@ def deal_with_to_send_alarm(processlist):
 
 def query_slow_query(node_name):
     server_db_user_name = app_conf["server_db_user_name"]
+    db_maximum_tolerance_time = app_conf["db_maximum_tolerance_time"]
     processlist = mymysql.execute(target_db_pool, """
 /*force_node='%s'*/
-select id, db, time, info  from information_schema.processlist where user ='%s' and command != 'Sleep' and time > 5
-    """ % (node_name, server_db_user_name))
+select id, db, time, info  from information_schema.processlist where user ='%s' and command != 'Sleep' and time > %s
+    """ % (node_name, server_db_user_name, db_maximum_tolerance_time))
     return processlist
 
 

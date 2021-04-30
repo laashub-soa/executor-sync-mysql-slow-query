@@ -17,6 +17,8 @@ mysql:
 polardb_node_name:
 # 业务账号名称
 server_db_user_name:
+# process阈值
+db_maximum_tolerance_time:
 # 钉钉webhook配置
 dingding_webhook_access_token:
   -
