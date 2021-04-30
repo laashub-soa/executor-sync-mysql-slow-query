@@ -1,0 +1,25 @@
+# 数据库配置
+mysql:
+  target:
+    host:
+    port:
+    user:
+    password:
+    charset:
+  self:
+    host:
+    port:
+    database:
+    user:
+    password:
+    charset:
+# polardb集群节点配置
+polardb_node_name:
+# 业务账号名称
+server_db_user_name:
+# 钉钉webhook配置
+dingding_webhook_access_token:
+  -
+# grafana基础地质
+grafana:
+  base_url:
