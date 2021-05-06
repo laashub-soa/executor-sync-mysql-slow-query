@@ -3,28 +3,42 @@ from contextlib import closing
 import pymysql
 from DBUtils.PooledDB import PooledDB
 
+from component import mymysql
 from exception import MyServiceException
 
+db_pool = None
 """
 https://webwareforpython.github.io/DBUtils/main.html
 """
 
 
 def init(mysql_config):
-    mysql_config["cursorclass"] = pymysql.cursors.DictCursor
-    return PooledDB(pymysql, **mysql_config)
+    if not db_pool:
+        mysql_config["cursorclass"] = pymysql.cursors.DictCursor
+        mymysql.db_pool = PooledDB(pymysql, **mysql_config)
 
 
-def execute(db_pool, sql, parameters=None):
-    # print("sql: \n %s \n parameters: %s" % (sql, parameters))
+def execute(sql, parameters=None):
+    print("sql: \n %s \n parameters: %s" % (sql, parameters))
     execute_result = None
     if not parameters:
         parameters = {}
     try:
-        with closing(db_pool.connection()) as conn:
+        with closing(mymysql.db_pool.connection()) as conn:
             with closing(conn.cursor()) as cursor:
-                cursor.execute(sql, parameters)
-                execute_result = cursor.fetchall()
+                if sql.strip()[:len("SELECT")].upper() == "SELECT":
+                    cursor.execute(sql, parameters)
+                    execute_result = cursor.fetchall()
+                else:
+                    if isinstance(parameters, list):
+                        num = cursor.executemany(sql, parameters)
+                        if num > 0:
+                            last_rowid = int(cursor.lastrowid)
+                            execute_result = list(range(last_rowid - num + 1, last_rowid + 1))
+                    else:
+                        cursor.execute(sql, parameters)
+                        execute_result = cursor.lastrowid
+                    conn.commit()
     except Exception:
         import traceback, sys
         traceback.print_exc()  # 打印异常信息
