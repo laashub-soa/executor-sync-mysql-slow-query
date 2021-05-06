@@ -57,6 +57,30 @@ def select_sql_template_id_by_text(db_name, sql_template_text):
     return sql_template_id
 
 
+def store_original_sql(db_name, original_sql, query_times, sql_template_id):
+    # 没有则新增
+    data_timestamp = int(
+        time.mktime(time.strptime(str(datetime.datetime.now())[:16], '%Y-%m-%d %H:%M')))  # 丢失掉秒钟精度
+    execution_start_time = (datetime.datetime.today()).strftime("%Y-%m-%dT%H:%M:%SZ")
+    insert_parameters = [[
+        "", db_name,
+        "", execution_start_time, "",
+        0, query_times, 0,
+        0, original_sql, data_timestamp,
+        sql_template_id
+    ]]
+    mymysql.change(self_db_pool, """
+    INSERT INTO `polardb_slow_log`(`db_cluster_id`, `db_name`
+    , `db_node_id`, `execution_start_time`, `host_address`
+    , `lock_times`, `query_times`, `parse_row_counts`
+    , `return_row_counts`, `sql_text`, `data_timestamp`
+    , `sql_template_id`
+    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, insert_parameters)
+    # 有则修改
+
+
+
 # 发送告警
 @my_async.async_call
 def deal_with_to_send_alarm(processlist):
@@ -76,6 +100,7 @@ def deal_with_to_send_alarm(processlist):
         sql_content = mymysql.extra_sql_template(processlist_item["info"])
         sql_template = mymysql.extra_sql_template(sql_content)
         sql_id = select_sql_template_id_by_text(db_name, sql_template)
+        store_original_sql(db_name, sql_content, process_time, sql_id)
         process_time_str = str(process_time) + "s"
         # db_count
         if not db_count.__contains__(db_name):
