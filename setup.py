@@ -60,7 +60,7 @@ def select_sql_template_id_by_text(db_name, sql_template_text):
 # 发送告警
 @my_async.async_call
 def deal_with_to_send_alarm(processlist):
-    if len(processlist) <= 0:
+    if not processlist or len(processlist) <= 0:
         return
     total_count = len(processlist)
     db_count = {}  # {$db: xxx}

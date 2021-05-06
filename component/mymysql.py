@@ -23,9 +23,15 @@ def execute(db_pool, sql, parameters=None):
     try:
         with closing(db_pool.connection()) as conn:
             with closing(conn.cursor()) as cursor:
-                cursor.execute(sql, parameters)
-                execute_result = cursor.fetchall()
-                conn.commit()
+                if isinstance(parameters, list):
+                    num = cursor.executemany(sql, parameters)
+                    if num > 0:
+                        last_rowid = int(cursor.lastrowid)
+                        execute_result = list(range(last_rowid - num + 1, last_rowid + 1))
+                        conn.commit()
+                else:
+                    cursor.execute(sql, parameters)
+                    execute_result = cursor.fetchall()
     except Exception:
         import traceback, sys
         traceback.print_exc()  # 打印异常信息
