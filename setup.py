@@ -32,12 +32,12 @@ def select_sql_template_id_by_text(db_name, sql_template_text):
         if local_cache_sql_template_id_2_text_db_level.__contains__(sql_template_text):
             return local_cache_sql_template_id_2_text_db_level[sql_template_text]
     # 在数据库中查询
-    sql_template_id = mymysql.execute(self_db_pool, """
+    sql_template_id = mymysql.query(self_db_pool, """
     SELECT ID FROM polardb_slow_log_template WHERE db_name=%s and convert(sql_text using utf8) = %s
     """, [db_name, sql_template_text])
     sql_template_id = list(sql_template_id)
     if len(sql_template_id) < 1:
-        insert_sql_result = mymysql.execute(self_db_pool, """
+        insert_sql_result = mymysql.change(self_db_pool, """
         INSERT INTO `polardb_slow_log_template`(`db_cluster_id`, `db_name`, `db_node_id`, `sql_text`)
         VALUES (%s, %s, %s, %s)
             """, [["", db_name, "", sql_template_text]])
@@ -108,7 +108,7 @@ def deal_with_to_send_alarm(processlist):
 def query_slow_query(node_name):
     server_db_user_name = app_conf["server_db_user_name"]
     db_maximum_tolerance_time = app_conf["db_maximum_tolerance_time"]
-    processlist = mymysql.execute(target_db_pool, """
+    processlist = mymysql.query(target_db_pool, """
 /*force_node='%s'*/
 select id, db, time, info  from information_schema.processlist where user ='%s' and command != 'Sleep' and time > %s
     """ % (node_name, server_db_user_name, db_maximum_tolerance_time))
